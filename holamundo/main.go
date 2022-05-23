@@ -7,4 +7,6 @@ import (
 func main() {
 
 	countries.Add("Quito")
+	countries.Add("Guayaquil")
+
 }

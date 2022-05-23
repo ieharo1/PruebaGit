@@ -1,3 +1,9 @@
 package countries
 
-var Country = "hola desde country"
+import "fmt"
+
+
+
+func Add(country string){
+	fmt.Println("entro", country)
+}

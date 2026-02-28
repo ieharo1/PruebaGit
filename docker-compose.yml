@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:7.0
+    container_name: callflowmanager-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: callflowmanager
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - callflowmanager-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: callflowmanager-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+      MONGODB_URI: mongodb://mongo:27017
+      MONGODB_DATABASE: callflowmanager
+      JWT_SECRET: callflowmanager_jwt_secret_key_2024_secure
+    depends_on:
+      - mongo
+    networks:
+      - callflowmanager-network
+
+volumes:
+  mongo_data:
+
+networks:
+  callflowmanager-network:
+    driver: bridge

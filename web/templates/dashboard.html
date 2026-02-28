@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.title}}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .sidebar { min-height: 100vh; background: #2c3e50; }
+        .sidebar a { color: #ecf0f1; text-decoration: none; padding: 12px 20px; display: block; border-left: 3px solid transparent; }
+        .sidebar a:hover, .sidebar a.active { background: #34495e; border-left-color: #0d6efd; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-2 sidebar p-0">
+                <div class="p-3 text-center border-bottom border-secondary">
+                    <i class="bi bi-telephone text-white display-6"></i>
+                    <h5 class="text-white mt-2">CallFlowManager</h5>
+                </div>
+                <nav class="mt-3">
+                    <a href="/dashboard" class="active"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
+                    <a href="/dashboard/calls"><i class="bi bi-telephone me-2"></i> Llamadas</a>
+                    <a href="/dashboard/customers"><i class="bi bi-people me-2"></i> Clientes</a>
+                    <a href="/dashboard/agents"><i class="bi bi-person-badge me-2"></i> Agentes</a>
+                    <a href="#" id="logoutBtn"><i class="bi bi-box-arrow-right me-2"></i> Salir</a>
+                </nav>
+            </div>
+            <div class="col-md-10 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2><i class="bi bi-speedometer2"></i> Dashboard</h2>
+                    <div><span class="me-3" id="userName"></span><span class="badge bg-primary" id="userRole"></span></div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-3 mb-3">
+                        <div class="card p-3 bg-primary text-white">
+                            <p class="mb-1">Total Llamadas</p>
+                            <h3 id="totalCalls">0</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card p-3 bg-warning text-dark">
+                            <p class="mb-1">Hoy</p>
+                            <h3 id="todayCalls">0</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card p-3 bg-info text-white">
+                            <p class="mb-1">Pendientes</p>
+                            <h3 id="pendingCalls">0</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card p-3 bg-success text-white">
+                            <p class="mb-1">Completadas</p>
+                            <h3 id="completedCalls">0</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header"><h5 class="mb-0">Llamadas por Estado</h5></div>
+                            <div class="card-body"><canvas id="callsChart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header"><h5 class="mb-0">Agentes Activos</h5></div>
+                            <div class="card-body">
+                                <h2 id="activeAgents">5</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        const API_URL = '/api';
+        let token = localStorage.getItem('token');
+        if (!token) window.location.href = '/login';
+        const headers = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        document.getElementById('userName').textContent = user.name || 'Usuario';
+        document.getElementById('userRole').textContent = user.role || 'user';
+
+        async function loadStats() {
+            const res = await fetch(API_URL + '/calls/stats', { headers });
+            const data = await res.json();
+            document.getElementById('totalCalls').textContent = data.total_calls;
+            document.getElementById('todayCalls').textContent = data.today_calls;
+            document.getElementById('pendingCalls').textContent = data.pending_calls;
+            document.getElementById('completedCalls').textContent = data.completed_calls;
+            document.getElementById('activeAgents').textContent = data.active_agents;
+
+            const ctx = document.getElementById('callsChart').getContext('2d');
+            const labels = Object.keys(data.calls_by_status || {});
+            const values = Object.values(data.calls_by_status || {});
+            new Chart(ctx, { type: 'doughnut', data: { labels, datasets: [{ data: values, backgroundColor: ['#ffc107', '#0dcaf0', '#198754', '#dc3545'] }] } });
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => { localStorage.clear(); window.location.href = '/login'; });
+        loadStats();
+    </script>
+</body>
+</html>
